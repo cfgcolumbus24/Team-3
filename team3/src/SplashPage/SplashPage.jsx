@@ -55,16 +55,16 @@ export default function SplashPage() {
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
           <div>
-            <div className="text-3xl font-bold text-purple-600">10,000+</div>
-            <div className="text-gray-600">Students Supported</div>
+            <div className="text-3xl font-bold text-purple-600">7,056</div>
+            <div className="text-gray-600">Schools Financed</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-purple-600">50+</div>
-            <div className="text-gray-600">Communities Served</div>
+            <div className="text-3xl font-bold text-purple-600">1.9 MILLION</div>
+            <div className="text-gray-600">Children Reached</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-purple-600">95%</div>
-            <div className="text-gray-600">Program Success Rate</div>
+            <div className="text-3xl font-bold text-purple-600">$202.8 MILLION</div>
+            <div className="text-gray-600">Total Capital Released</div>
           </div>
         </div>
       </div>

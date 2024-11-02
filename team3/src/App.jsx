@@ -14,8 +14,7 @@ function App() {
           <Route path="/PropLogin" element={<PropLogin />} />
           <Route path="/PromptPage" element={<PromptPage />} />
           <Route path="/ChooseRole" element={<Roles />} />
-          <Route path="/dashboard" element={<PropDashboard />} />
-          <Route path="/dashboard2" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
   );
