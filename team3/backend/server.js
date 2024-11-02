@@ -14,12 +14,14 @@ http.createServer(function (req, res) {
 
     // Handle GET requests
     if (req.method === 'GET' && parsedUrl.pathname === '/teachers') {
-        // Get the 'id' query parameter from the URL
-        const teacherId = parseInt(parsedUrl.query.id, 10);
+        // Get the 'id' query parameter from the URL (expecting fname_lname format)
+        const teacherId = parsedUrl.query.id;
 
-        if (!isNaN(teacherId)) {
-            // Find the teacher with the matching id
-            const teacher = teachers.find(t => t.id === teacherId);
+        if (teacherId) {
+            // Find the teacher with the matching fname_lname (case insensitive)
+            const teacher = teachers.find(t => 
+                `${t.fname.toLowerCase()}_${t.lname.toLowerCase()}` === teacherId.toLowerCase()
+            );
 
             if (teacher) {
                 // Return the teacher's data as JSON
