@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import './App.css';
 
-function App() {
+
+function Sidebar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedInstructor, setSelectedInstructor] = useState(null);
   const instructors = ['John Doe', 'Jane Smith', 'Emily Davis'];
@@ -52,4 +52,4 @@ function App() {
   );
 }
 
-export default App;
+export default Sidebar;
