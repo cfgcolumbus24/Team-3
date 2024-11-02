@@ -1,74 +1,79 @@
 const http = require('http');
 const url = require('url');
-// const { MongoClient, ObjectId } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 
 // MongoDB connection URI and database/collection setup
-// const uri = 'mongodb://localhost:27017';
-// const client = new MongoClient(uri);
-// const dbName = 'schoolDB';
-// const collectionName = 'teachers';
+const uri = 'mongodb+srv://<login>:<password>@<cluster_name>.emxl2.mongodb.net/'; // replace <username> and <password>
+const client = new MongoClient(uri);
+const dbName = 'schoolDB';
+const collectionName = 'teachers';
 
 // Connect to MongoDB
-// async function connectToDatabase() {
-    // await client.connect();
-    // console.log("Connected to MongoDB");
-    // const db = client.db(dbName);
-    // return db.collection(collectionName);
-// }
-
-const list_of_teachers = [
-    {id: 1, fname: 'Jacqueline', lname: 'Batshuayi', subjects_taught: 'Math, Science, History', grades_taught: '1st, 2nd, 3rd', calendar_info: []},
-    {id: 2, fname: 'Michael', lname: 'Smith', subjects_taught: 'French, Math', grades_taught: '1st, 2nd', calendar_info:[]},
-    {id: 3, fname: 'Laura', lname: 'Jones', subjects_taught: 'Science, History, French', grades_taught: '2nd, 3rd, 4th', calendar_info:[] }
-];
-
-function addLessonPlan(teacherId, dateSubmitted, lessonPlan) {
-    const teacher = list_of_teachers.find(t => t.id === parseInt(teacherId));
-    if (teacher) {
-        const newEntry = {
-            date: dateSubmitted,
-            lesson_plan: lessonPlan
-        };
-        teacher.calendar_info.push(newEntry);
-        return true;
-    }
-    return false;
+async function connectToDatabase() {
+    await client.connect();
+    console.log("Connected to MongoDB");
+    const db = client.db(dbName);
+    return db.collection(collectionName);
 }
 
-http.createServer(function (req, res) {
-    
-    var parsedUrl = url.parse(req.url, true);
-    
+// Initialize sample data if the collection is empty
+async function initializeDatabase(collection) {
+    const count = await collection.countDocuments();
+    if (count === 0) {
+        const sampleTeachers = [
+            { fname: 'Jacqueline', lname: 'Batshuayi', subjects_taught: 'Math, Science, History', grades_taught: '1st, 2nd, 3rd', calendar_info: [] },
+            { fname: 'Michael', lname: 'Smith', subjects_taught: 'French, Math', grades_taught: '1st, 2nd', calendar_info: [] },
+            { fname: 'Laura', lname: 'Jones', subjects_taught: 'Science, History, French', grades_taught: '2nd, 3rd, 4th', calendar_info: [] }
+        ];
+        await collection.insertMany(sampleTeachers);
+        console.log("Initialized database with sample teachers");
+    }
+}
+
+// Function to add a lesson plan
+async function addLessonPlan(collection, teacherId, dateSubmitted, lessonPlan) {
+    const result = await collection.updateOne(
+        { _id: new ObjectId(teacherId) },
+        { $push: { calendar_info: { date: dateSubmitted, lesson_plan: lessonPlan } } }
+    );
+    return result.modifiedCount > 0;
+}
+
+// Server
+http.createServer(async function (req, res) {
+    const parsedUrl = url.parse(req.url, true);
+    const collection = await connectToDatabase();
+
+    // Initialize the database if empty
+    await initializeDatabase(collection);
+
     if (req.method === 'GET' && parsedUrl.pathname === '/teachers') {
-        
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end(JSON.stringify(list_of_teachers));
+        const teachers = await collection.find().toArray();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(teachers));
 
-    // tests to see if information from post is added
-    } else if (req.method === 'GET' && parsedUrl.pathname.startsWith('/teachers')) {
-        // get the teacherId from the url, i.e. /teachers/2, gets the 2
+    } else if (req.method === 'GET' && parsedUrl.pathname.startsWith('/teachers/')) {
         const teacherId = parsedUrl.pathname.split('/')[2];
-        const teacher = list_of_teachers.find(t => t.id === parseInt(teacherId));
-
-        if (teacher) {
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(teacher));
-        } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Teacher not found.' }));
+        try {
+            const teacher = await collection.findOne({ _id: new ObjectId(teacherId) });
+            if (teacher) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(teacher));
+            } else {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Teacher not found.' }));
+            }
+        } catch (error) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid teacher ID format.' }));
         }
 
     } else if (req.method === 'POST' && parsedUrl.pathname === '/teachers/calendar') {
         let body = '';
-
-        req.on('data', chunk => {
-            body += chunk.toString(); 
-
-        });
-
-        req.on('end', () => {
-            const {teacherId, date, lessonPlan} = JSON.parse(body);
-            const added =  (teacherId, date, lessonPlan);
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+            const { teacherId, date, lessonPlan } = JSON.parse(body);
+            const added = await addLessonPlan(collection, teacherId, date, lessonPlan);
 
             if (added) {
                 res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -78,25 +83,7 @@ http.createServer(function (req, res) {
                 res.end(JSON.stringify({ error: 'Teacher not found.' }));
             }
         });
-    
-    } else if (req.method === 'POST' && parsedUrl.pathname === '/proprietor/login') {
-        let body = '';
 
-        req.on('data', chunk => {
-            body += chunk.toString();
-        });
-
-        req.on('end', () => {
-            try {
-                const { firstName, lastName, username, password } = JSON.parse(body);
-
-                res.writeHead(201, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ message: 'Account created successfully', user: { firstName, lastName, username } }));
-        } catch (error) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Invalid JSON input.' }));
-        }
-    });
     } else {
         res.writeHead(404, { 'Content-Type': 'text/html' });
         res.end('<h1>404 Not Found</h1>');
