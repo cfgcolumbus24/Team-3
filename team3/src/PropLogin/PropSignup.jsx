@@ -1,7 +1,7 @@
 import React from "react";
 import axios from "axios";
 
-const PropLogin = () => {
+const PropSignup = () => {
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
   const [username, setUsername] = React.useState("");
@@ -11,8 +11,9 @@ const PropLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      const response = await axios.post("/api/login", {
+      const response = await axios.post("http://localhost:3001/api/proprietor/create-account", {
         firstName,
         lastName,
         username,
@@ -41,30 +42,38 @@ const PropLogin = () => {
         onSubmit={handleSubmit}
         className='flex flex-col items-center justify-center min-h-screen'
       >
-        <h2 className='text-2xl font-semibold mb-8'>Login</h2>
+        <h2 className='text-2xl font-semibold mb-8'>Signup</h2>
         <input
           type='text'
           placeholder='First Name'
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
           className='mb-4 p-3 border border-gray-300 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-blue-500'
-        ></input>
+        />
         <input
           type='text'
           placeholder='Last Name'
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
           className='mb-4 p-3 border border-gray-300 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-blue-500'
-        ></input>
+        />
         <input
           type='text'
           placeholder='Username'
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           className='mb-4 p-3 border border-gray-300 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-blue-500'
-        ></input>
+        />
         <input
           type='password'
           placeholder='Password'
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           className='mb-6 p-3 border border-gray-300 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-blue-500'
         />
 
         <button className='bg-gradient-to-r from-orange-400 via-pink-600 to-teal-400 text-white px-8 py-3 rounded-lg hover:from-orange-600 hover:to-pink-600 transition-all transform hover:scale-105'>
-          Login
+          Signup
         </button>
         {isErrorMessage && (
           <p className='text-red-500 mt-4'>{isErrorMessage}</p>
@@ -77,4 +86,4 @@ const PropLogin = () => {
   );
 };
 
-export default PropLogin;
+export default PropSignup;
