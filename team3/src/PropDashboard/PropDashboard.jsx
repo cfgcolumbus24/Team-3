@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from './Sidebar'; // Make sure to import the Sidebar component
+import Sidebar from '../sidebar_components/sidebar'; // Make sure to import the Sidebar component
 
 const PropDashboard = () => {
   // Assuming isAuthenticated is true for demonstration purposes

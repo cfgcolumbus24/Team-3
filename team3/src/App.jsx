@@ -3,6 +3,8 @@ import PromptPage from "./PromptPage/PromptPage";
 import SplashPage from "./SplashPage/SplashPage";
 import PropLogin from "./PropLogin/PropLogin";
 import Roles from "./ChooseRole/Roles";
+import PropDashboard from "./PropDashboard/PropDashboard";
+import Dashboard from "./Dashboard/Dashboard";
 
 function App() {
   return (
@@ -12,6 +14,8 @@ function App() {
           <Route path="/PropLogin" element={<PropLogin />} />
           <Route path="/PromptPage" element={<PromptPage />} />
           <Route path="/ChooseRole" element={<Roles />} />
+          <Route path="/dashboard" element={<PropDashboard />} />
+          <Route path="/dashboard2" element={<Dashboard />} />
       </Routes>
     </Router>
   );
