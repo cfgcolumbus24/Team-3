@@ -2,10 +2,10 @@ var http = require('http');
 var url = require('url');
 
 // Sample list of teachers with ids
-const teachers = [
-    { id: 1, fname: 'Jacqueline', lname: 'Batshuayi', subjects_taught: 'Math, Science, History' },
-    { id: 2, fname: 'Michael', lname: 'Smith', subjects_taught: 'English, Music' },
-    { id: 3, fname: 'Laura', lname: 'Jones', subjects_taught: 'Physics, Chemistry' }
+const list_of_teachers = [
+    {fname: 'Jacqueline', lname: 'Batshuayi', subjects_taught: 'Math, Science, History', grades_taught: '1st, 2nd, 3rd'},
+    {fname: 'Michael', lname: 'Smith', subjects_taught: 'French, Math', grades_taught:'1st, 2nd'},
+    {fname: 'Laura', lname: 'Jones', subjects_taught: 'Science, History, French', grades_taught: '2nd, 3rd, 4th'}
 ];
 
 http.createServer(function (req, res) {
