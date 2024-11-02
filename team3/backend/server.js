@@ -8,38 +8,49 @@ const list_of_teachers = [
     {id: 3, fname: 'Laura', lname: 'Jones', subjects_taught: 'Science, History, French', grades_taught: '2nd, 3rd, 4th'}
 ];
 
-http.createServer(function (req, res) {
-    // Parse the URL
-    var parsedUrl = url.parse(req.url, true);
+function addLessonPlan(teacherId, date, lessonPlan) {
+    const teacher = list_of_teachers.find(t => t.id === parseInt(teacherId));
+    if (teacher) {
+        const newEntry = {
+            date: date,
+            lesson_plan: lessonPlan
+        };
+        teacher.calendar_info.push(newEntry);
+        return true;
+    }
+    return false;
+}
 
-    // Handle GET requests
+http.createServer(function (req, res) {
+    
+    var parsedUrl = url.parse(req.url, true);
+    
     if (req.method === 'GET' && parsedUrl.pathname === '/teachers') {
-        // Get the 'id' query parameter from the URL (expecting fname_lname format)
+        
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end(JSON.stringify(list_of_teachers));
 
-        const teacherId = parsedUrl.query.id;
+    } else if (req.method === 'POST' && parsedUrl.pathname === '/teachers/calendar') {
+        let body = '';
 
-        if (teacherId) {
-            // Find the teacher with the matching fname_lname (case insensitive)
-            const teacher = teachers.find(t => 
-                `${t.fname.toLowerCase()}_${t.lname.toLowerCase()}` === teacherId.toLowerCase()
-            );
+        req.on('data', chunk => {
+            body += chunk.toString(); 
 
-            if (teacher) {
-                // Return the teacher's data as JSON
-                res.writeHead(200, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify(teacher));
+        });
+
+        req.on('end', () => {
+            const {teacherId, date, lessonPlan} = JSON.parse(body);
+            const added = addLessonPlan(teacherId, date, lessonPlan);
+
+            if (added) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ message: 'Lesson plan added successfully.' }));
             } else {
-                // Teacher not found
-                res.writeHead(404, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ error: 'Teacher not found' }));
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Teacher not found.' }));
             }
-        } else {
-            // Missing or invalid id query parameter
-            res.writeHead(400, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({ error: 'Invalid or missing teacher id' }));
-        }
+        });
+    
     } else {
         res.writeHead(404, {'Content-Type': 'text/html'});
         res.end('<h1>404 Not Found</h1>');
