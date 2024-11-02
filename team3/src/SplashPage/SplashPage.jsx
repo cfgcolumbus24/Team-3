@@ -1,15 +1,16 @@
 import React from 'react';
 import { ArrowRight, Heart, BookOpen, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function SplashPage() {
+  const navigate = useNavigate();
+
+  function handleClick(){
+    navigate('/ChooseRole');
+  }
+
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-gray-100 p-4">
-      {/* Logo and Header */}
-      {/* <div className="absolute top-5 left-5 flex items-center space-x-2">
-        <img src="/opp_int.jpg" alt="Opportunity International Logo" className="w-16 h-auto" />
-      </div> */}
-
-      {/* Main Content */}
       <div className="max-w-3xl mx-auto text-center space-y-8">
         <h1 className="text-4xl md:text-5xl font-bold font-mono">
           <span className="animate-gradient-text bg-gradient-to-r from-orange-400 via-pink-600 to-teal-400 bg-clip-text text-transparent">
@@ -21,7 +22,6 @@ export default function SplashPage() {
           Empowering communities through education and opportunity
         </p>
 
-        {/* Mission Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-12">
           <div className="bg-gray-50 p-6 rounded-lg shadow-md">
             <Heart className="w-12 h-12 text-purple-600 mx-auto mb-4" />
@@ -42,10 +42,9 @@ export default function SplashPage() {
           </div>
         </div>
 
-        {/* CTA Button with Gradient */}
         <button 
           className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white rounded-full shadow-lg hover:shadow-xl overflow-hidden"
-          onClick={() => window.location.href = '/login'}
+          onClick={handleClick}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-orange-400 via-pink-600 to-teal-400 animate-gradient-x"></div>
           <span className="relative flex items-center">
@@ -54,7 +53,6 @@ export default function SplashPage() {
           </span>
         </button>
 
-        {/* Impact Stats */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
           <div>
             <div className="text-3xl font-bold text-purple-600">10,000+</div>
@@ -71,7 +69,6 @@ export default function SplashPage() {
         </div>
       </div>
 
-      {/* Add keyframes for both gradient animations */}
       <style jsx global>{`
         @keyframes gradient-x {
           0% {
