@@ -113,6 +113,9 @@ const proprietorAuthMiddleware = (req, res, next) => {
   }
 };
 
+
+
+
 app.post("/api/register", async (req, res) => {
   try {
     const { username, password } = req.body;
