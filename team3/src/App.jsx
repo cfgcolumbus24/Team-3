@@ -1,11 +1,10 @@
-import { useState } from "react";
-import Sidebar from "./sidebar_components/sidebar";
-import Promptinput from "./PromptForm/Promptinput";
+import PromptPage from "./PromptPage/PromptPage";
+import SplashPage from "./SplashPage/SplashPage";
 
 function App() {
   return (
     <>
-      <PromptPage />
+      <SplashPage />
     </>
   );
 }

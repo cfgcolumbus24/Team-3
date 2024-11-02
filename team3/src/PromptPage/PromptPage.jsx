@@ -1,5 +1,5 @@
-import Sidebar from "./sidebar_components/sidebar";
-import Promptinput from "./PromptForm/Promptinput";
+import Sidebar from "../sidebar_components/sidebar";
+import Promptinput from "../PromptForm/Promptinput";
 
 export const PromptPage = () => {
   return (
