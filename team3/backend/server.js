@@ -196,7 +196,9 @@ app.get("/api/teachers", async (req, res) => {
     const teachers = await Teacher.find();
     res.json(teachers);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching teachers", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching teachers", error: error.message });
   }
 });
 
@@ -208,47 +210,67 @@ app.get("/api/teachers/:id", async (req, res) => {
     }
     res.json(teacher);
   } catch (error) {
-    res.status(400).json({ message: "Invalid teacher ID", error: error.message });
+    res
+      .status(400)
+      .json({ message: "Invalid teacher ID", error: error.message });
   }
 });
 
-app.post("/api/teachers/calendar", proprietorAuthMiddleware, async (req, res) => {
-  try {
-    const { teacherId, date, lessonPlan } = req.body;
-    const teacher = await Teacher.findById(teacherId);
-    if (!teacher) {
-      return res.status(404).json({ message: "Teacher not found" });
+app.post(
+  "/api/teachers/calendar",
+  proprietorAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { teacherId, date, lessonPlan } = req.body;
+      const teacher = await Teacher.findById(teacherId);
+      if (!teacher) {
+        return res.status(404).json({ message: "Teacher not found" });
+      }
+      teacher.calendar_info.push({
+        date: new Date(date),
+        lesson_plan: lessonPlan,
+      });
+      await teacher.save();
+      res.json({ message: "Lesson plan added successfully" });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ message: "Error adding lesson plan", error: error.message });
     }
-    teacher.calendar_info.push({ date: new Date(date), lesson_plan: lessonPlan });
-    await teacher.save();
-    res.json({ message: "Lesson plan added successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Error adding lesson plan", error: error.message });
   }
-});
+);
 
 app.post("/api/proprietor/create-account", async (req, res) => {
   try {
-    const { fname, lname, username, password } = req.body;
+    const { firstName, lastName, username, password } = req.body;
     const existingProprietor = await Proprietor.findOne({ username });
     if (existingProprietor) {
       return res.status(409).json({ message: "Username already exists" });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const proprietor = new Proprietor({
-      fname,
-      lname,
-      username,
+      fname: firstName,
+      lname: lastName,
+      username: username,
       password: hashedPassword,
     });
     await proprietor.save();
-    res.status(201).json({ message: "Proprietor account created successfully" });
+    res
+      .status(201)
+      .json({ message: "Proprietor account created successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Error creating proprietor account", error: error.message });
+    res
+      .status(500)
+      .json({
+        message: "Error creating proprietor account",
+        error: error.message,
+      });
   }
 });
 
 app.post("/api/proprietor/login", async (req, res) => {
+  console.log("Login request received");
+  console.log(req.body);
   try {
     const { username, password } = req.body;
     const proprietor = await Proprietor.findOne({ username });
