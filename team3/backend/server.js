@@ -3,9 +3,9 @@ var url = require('url');
 
 // Sample list of teachers with ids
 const list_of_teachers = [
-    {fname: 'Jacqueline', lname: 'Batshuayi', subjects_taught: 'Math, Science, History', grades_taught: '1st, 2nd, 3rd'},
-    {fname: 'Michael', lname: 'Smith', subjects_taught: 'French, Math', grades_taught:'1st, 2nd'},
-    {fname: 'Laura', lname: 'Jones', subjects_taught: 'Science, History, French', grades_taught: '2nd, 3rd, 4th'}
+    {id: 1, fname: 'Jacqueline', lname: 'Batshuayi', subjects_taught: 'Math, Science, History', grades_taught: '1st, 2nd, 3rd'},
+    {id: 2, fname: 'Michael', lname: 'Smith', subjects_taught: 'French, Math', grades_taught:'1st, 2nd'},
+    {id: 3, fname: 'Laura', lname: 'Jones', subjects_taught: 'Science, History, French', grades_taught: '2nd, 3rd, 4th'}
 ];
 
 http.createServer(function (req, res) {
@@ -15,6 +15,9 @@ http.createServer(function (req, res) {
     // Handle GET requests
     if (req.method === 'GET' && parsedUrl.pathname === '/teachers') {
         // Get the 'id' query parameter from the URL (expecting fname_lname format)
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify(list_of_teachers));
+
         const teacherId = parsedUrl.query.id;
 
         if (teacherId) {
