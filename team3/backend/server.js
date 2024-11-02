@@ -1,20 +1,25 @@
 const http = require('http');
 const url = require('url');
-// const { MongoClient, ObjectId } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
+const bcrypt = require('bcrypt');
 
-// MongoDB connection URI and database/collection setup
-// const uri = 'mongodb://localhost:27017';
-// const client = new MongoClient(uri);
-// const dbName = 'schoolDB';
-// const collectionName = 'teachers';
+//MongoDB connection URI and database/collection setup
+const uri = 'mongodb://localhost:27017';
+const client = new MongoClient(uri);
+const dbName = 'schoolDB';
+const collectionName = 'teachers';
 
-// Connect to MongoDB
-// async function connectToDatabase() {
-    // await client.connect();
-    // console.log("Connected to MongoDB");
-    // const db = client.db(dbName);
-    // return db.collection(collectionName);
-// }
+//Connect to MongoDB
+async function connectToDatabase() {
+    await client.connect();
+    console.log("Connected to MongoDB");
+    const db = client.db(dbName);
+    return db.collection(collectionName);
+}
+
+async function createAccount(firstName, lastName, username, password) {
+    const collection = await connectToDatabase();
+}
 
 const list_of_teachers = [
     {id: 1, fname: 'Jacqueline', lname: 'Batshuayi', subjects_taught: 'Math, Science, History', grades_taught: '1st, 2nd, 3rd', calendar_info: []},
