@@ -1,15 +1,18 @@
-import { useState } from 'react'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
+import CalendarComp from "./CalendarComponent/CalendarComp.jsx";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
+  
 
   return (
     <>
       <div>
+        <CalendarComp />
       </div>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
