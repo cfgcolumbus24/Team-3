@@ -1,93 +1,127 @@
-const http = require('http');
-const url = require('url');
-const { MongoClient, ObjectId } = require('mongodb');
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const cors = require("cors");
 
-// MongoDB connection URI and database/collection setup
-const uri = 'mongodb+srv://<login>:<password>@<cluster_name>.emxl2.mongodb.net/'; // replace <username> and <password>
-const client = new MongoClient(uri);
-const dbName = 'schoolDB';
-const collectionName = 'teachers';
+const app = express();
+const PORT = process.env.PORT || 3001;
 
-// Connect to MongoDB
-async function connectToDatabase() {
-    await client.connect();
-    console.log("Connected to MongoDB");
-    const db = client.db(dbName);
-    return db.collection(collectionName);
-}
+app.use(cors());
+app.use(express.json());
 
-// Initialize sample data if the collection is empty
-async function initializeDatabase(collection) {
-    const count = await collection.countDocuments();
-    if (count === 0) {
-        const sampleTeachers = [
-            { fname: 'Jacqueline', lname: 'Batshuayi', subjects_taught: 'Math, Science, History', grades_taught: '1st, 2nd, 3rd', calendar_info: [] },
-            { fname: 'Michael', lname: 'Smith', subjects_taught: 'French, Math', grades_taught: '1st, 2nd', calendar_info: [] },
-            { fname: 'Laura', lname: 'Jones', subjects_taught: 'Science, History, French', grades_taught: '2nd, 3rd, 4th', calendar_info: [] }
-        ];
-        await collection.insertMany(sampleTeachers);
-        console.log("Initialized database with sample teachers");
+
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("Could not connect to MongoDB", err));
+
+
+const UserSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+});
+
+const User = mongoose.model("User", UserSchema);
+
+
+app.post("/api/register", async (req, res) => {
+  try {
+    const { email, username, password } = req.body;
+
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return res
+        .status(409)
+        .json({ message: "Email or username already exists" });
     }
-}
 
-// Function to add a lesson plan
-async function addLessonPlan(collection, teacherId, dateSubmitted, lessonPlan) {
-    const result = await collection.updateOne(
-        { _id: new ObjectId(teacherId) },
-        { $push: { calendar_info: { date: dateSubmitted, lesson_plan: lessonPlan } } }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ email, username, password: hashedPassword });
+    await user.save();
+    res.status(201).json({ message: "User created successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating user", error: error.message });
+  }
+});
+
+app.post("/api/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
     );
-    return result.modifiedCount > 0;
-}
 
-// Server
-http.createServer(async function (req, res) {
-    const parsedUrl = url.parse(req.url, true);
-    const collection = await connectToDatabase();
+    res.json({
+      success: true,
+      token,
+      user: {
+        email: user.email,
+        username: user.username,
+        _id: user._id,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error logging in", error: error.message });
+  }
+});
 
-    // Initialize the database if empty
-    await initializeDatabase(collection);
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No token provided" });
 
-    if (req.method === 'GET' && parsedUrl.pathname === '/teachers') {
-        const teachers = await collection.find().toArray();
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(teachers));
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.userId;
+    req.username = decoded.username;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
 
-    } else if (req.method === 'GET' && parsedUrl.pathname.startsWith('/teachers/')) {
-        const teacherId = parsedUrl.pathname.split('/')[2];
-        try {
-            const teacher = await collection.findOne({ _id: new ObjectId(teacherId) });
-            if (teacher) {
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify(teacher));
-            } else {
-                res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Teacher not found.' }));
-            }
-        } catch (error) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Invalid teacher ID format.' }));
-        }
+app.get("/api/protected", authMiddleware, (req, res) => {
+  res.json({
+    message: "This is a protected route",
+    userId: req.userId,
+    username: req.username,
+  });
+});
 
-    } else if (req.method === 'POST' && parsedUrl.pathname === '/teachers/calendar') {
-        let body = '';
-        req.on('data', chunk => { body += chunk.toString(); });
-        req.on('end', async () => {
-            const { teacherId, date, lessonPlan } = JSON.parse(body);
-            const added = await addLessonPlan(collection, teacherId, date, lessonPlan);
-
-            if (added) {
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ message: 'Lesson plan added successfully.' }));
-            } else {
-                res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Teacher not found.' }));
-            }
-        });
-
-    } else {
-        res.writeHead(404, { 'Content-Type': 'text/html' });
-        res.end('<h1>404 Not Found</h1>');
+app.get("/api/user", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-}).listen(8080);
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching user details", error: error.message });
+  }
+});
 
-console.log('Server running at http://localhost:8080/');
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
