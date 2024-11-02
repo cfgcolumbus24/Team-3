@@ -59,6 +59,14 @@ async function createProprietorAccount(collection, firstName, lastName, username
     return result.insertedId !== null;
 }
 
+async function authenticateProprietor(collection, username, password) {
+    const proprietor = await collection.findOne({ username: username });
+    if (proprietor && await bcrypt.compare(password, proprietor.password)) {
+        return { success: true, proprietorId: proprietor_id };
+    }
+    return {success: false };
+}
+
 // Server
 http.createServer(async function (req, res) {
     const parsedUrl = url.parse(req.url, true);
@@ -128,7 +136,26 @@ http.createServer(async function (req, res) {
                 res.end(JSON.stringify({ error: 'Invalid JSON input.' }));
             }
         });
+    } else if (req.method === 'POST' && parsedUrl.pathname === 'proprietor/login') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+            try {
+                const { username, password } = JSON.parse(body);
+                const { success, adminId } = await authenticateProprietor(admins, username, password);
 
+                if (success) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ message: 'Login successful.', adminId: adminId }));
+                } else {
+                    res.writeHead(401, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'Invalid username or password.' }));
+                }
+            } catch (error) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Invalid JSON input.' }));
+            }
+        });
     } else {
         res.writeHead(404, { 'Content-Type': 'text/html' });
         res.end('<h1>404 Not Found</h1>');
