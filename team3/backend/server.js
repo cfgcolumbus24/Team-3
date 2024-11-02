@@ -272,8 +272,6 @@ app.post("/api/proprietor/create-account", async (req, res) => {
 });
 
 app.post("/api/proprietor/login", async (req, res) => {
-  console.log("Login request received");
-  console.log(req.body);
   try {
     const { username, password } = req.body;
     const proprietor = await Proprietor.findOne({ username });

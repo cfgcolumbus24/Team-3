@@ -13,14 +13,15 @@ const PropLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Success')
     try {
-      console.log('Success in try')
-      console.log(username, password)
-      const response = await axios.post("http://localhost:3001/api/proprietor/login", {
-        username,
-        password,
-      }, {headers: {"Content-Type": "application/json"}});
+      const response = await axios.post(
+        "http://localhost:3001/api/proprietor/login",
+        {
+          username,
+          password,
+        },
+        { headers: { "Content-Type": "application/json" } }
+      );
 
       if (response.status === 200) {
         setSuccessMessage("Login successful!");
@@ -34,53 +35,62 @@ const PropLogin = () => {
   };
 
   return (
-    <div className='relative min-h-screen'>
+    <div className="relative min-h-screen bg-white">
       <img
-        src='/opp_int.jpg'
-        alt='Logo'
-        className='absolute top-5 left-5 w-16 h-auto'
+        src="/opp_int.jpg"
+        alt="Logo"
+        className="absolute top-8 left-8 w-16 h-auto shadow-lg rounded-md"
       />
 
-      {!isSignedup && (
-        <form
-          onSubmit={handleSubmit}
-          className='flex flex-col items-center justify-center min-h-screen'
-        >
-          <h2 className='text-2xl font-semibold mb-8'>Login</h2>
-          <input
-            onChange={(e) => setUsername(e.target.value)}
-            type='text'
-            placeholder='Username'
-            className='mb-4 p-3 border border-gray-300 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-blue-500'
-          ></input>
-          <input
-            onChange={(e) => setPassword(e.target.value)}
-            type='password'
-            placeholder='Password'
-            className='mb-6 p-3 border border-gray-300 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-blue-500'
-          />
+      <div className="flex flex-col items-center justify-center min-h-screen px-4">
+        {!isSignedup ? (
+          <div className="w-full max-w-md space-y-6">
+            <form
+              onSubmit={handleSubmit}
+              className="bg-white p-8 rounded-xl shadow-lg space-y-6"
+            >
+              <h2 className="text-3xl font-bold text-center text-gray-800">Login</h2>
+              
+              <div className="space-y-4">
+                <input
+                  onChange={(e) => setUsername(e.target.value)}
+                  type="text"
+                  placeholder="Username"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                />
+                <input
+                  onChange={(e) => setPassword(e.target.value)}
+                  type="password"
+                  placeholder="Password"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                />
+              </div>
 
-          <button className='bg-gradient-to-r from-orange-400 via-pink-600 to-teal-400 text-white px-8 py-3 rounded-lg hover:from-orange-600 hover:to-pink-600 transition-all transform hover:scale-105'>
-            Login
-          </button>
-          {isErrorMessage && (
-            <p className='text-red-500 mt-4'>{isErrorMessage}</p>
-          )}
-          {isSuccessMessage && (
-            <p className='text-green-500 mt-4'>{isSuccessMessage}</p>
-          )}
-        </form>
-  )}
-  {isSignedup && <PropSignup />}
+              <button className="w-full bg-gradient-to-r from-orange-400 via-pink-600 to-teal-400 text-white py-3 rounded-lg hover:from-orange-500 hover:via-pink-700 hover:to-teal-500 transition-all transform hover:scale-102 font-medium">
+                Login
+              </button>
 
-      <div className='flex flex-row items-center justify-center '>
-        <h1> Don't have an account?</h1>
-        <button
-          onClick={() => setSignedup(!isSignedup)}
-          className='bg-gradient-to-r from-orange-400 via-pink-600 to-teal-400 text-white px-8 py-1 rounded-lg hover:from-orange-600 hover:to-pink-600 transition-all transform hover:scale-105 m-1'
-        >
-          Sign Up
-        </button>
+              {isErrorMessage && (
+                <p className="text-red-500 text-center">{isErrorMessage}</p>
+              )}
+              {isSuccessMessage && (
+                <p className="text-green-500 text-center">{isSuccessMessage}</p>
+              )}
+            </form>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 bg-white p-6 rounded-xl shadow-lg">
+              <p className="text-gray-600">Don't have an account?</p>
+              <button
+                onClick={() => setSignedup(true)}
+                className="bg-gradient-to-r from-orange-400 via-pink-600 to-teal-400 text-white px-6 py-2 rounded-lg hover:from-orange-500 hover:via-pink-700 hover:to-teal-500 transition-all transform hover:scale-102 font-medium"
+              >
+                Sign Up
+              </button>
+            </div>
+          </div>
+        ) : (
+          <PropSignup />
+        )}
       </div>
     </div>
   );
