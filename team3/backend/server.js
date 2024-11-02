@@ -11,13 +11,14 @@ http.createServer(function (req, res) {
             res.writeHead(200, {'Content-Type': 'text/html'});
             res.end('<h1>Hello World!</h1>');
         } else if (parsedUrl.pathname === '/teachers') {
-            // Send JSON response
-            const responseData = {
-            message: 'Hello, world!',
-            timestamp: new Date()
-        };
+            const list_of_teachers = {
+                fname: 'Jacqueline',
+                lname: 'Batshuayi',
+                subjects_taught:'Math, Science, History'
+            };
             res.writeHead(200, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify(responseData));
+            const jsonContent = JSON.stringify(responseData);
+            res.end(jsonContent);
         } else {
             res.writeHead(404, {'Content-Type': 'text/html'});
             res.end('<h1>404 Not Found</h1>');
