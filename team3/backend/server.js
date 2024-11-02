@@ -279,6 +279,21 @@ app.post("/api/proprietor/login", async (req, res) => {
   }
 });
 
+app.delete("/api/teachers/:id", proprietorAuthMiddleware, async (req, res) => {
+  try {
+    const teacherId = req.params.id;
+    const result = await Teacher.deleteOne({ _id: teacherId });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    res.json({ message: "Teacher deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting teacher", error: error.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
