@@ -1,0 +1,18 @@
+PROMPT: Generate a lesson plan for Math - {topic}
+RESPONSE:
+Quick practice (questions level below the given subject):
+{quick_practice}
+
+Daily routine:
+    Activity 1: {activity_1}
+    Activity 2: {activity_2}
+    Activity 3: {activity_3}
+
+Essential questions:
+    1. {essential_question_1}
+    2. {essential_question_2}
+
+Assessments:
+    1. {assessment_1}
+    2. Come up with more problems/ideas that need to be highlighted.
+---
