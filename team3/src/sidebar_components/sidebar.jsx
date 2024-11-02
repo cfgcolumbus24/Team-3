@@ -10,7 +10,7 @@ function Sidebar({ isAuthenticated }) {
     setSelectedInstructor(instructor);
   };
 
-  const handleDeleteInstructor = (instructor) => {
+  const handleDeleteInstructor = () => {
     if (isAuthenticated) {
       setInstructorToDelete(instructor);
       setIsModalOpen(true);
@@ -43,7 +43,7 @@ function Sidebar({ isAuthenticated }) {
               <span onClick={() => handleInstructorClick(instructor)}>{instructor}</span>
               {isAuthenticated && (
                 <button
-                  onClick={() => handleDeleteInstructor(instructor)}
+                  onClick={handleDeleteInstructor}
                   className="ml-2 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
                 >
                   Delete
