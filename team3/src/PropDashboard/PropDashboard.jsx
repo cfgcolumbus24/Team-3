@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from '../sidebar_components/sidebar'; // Make sure to import the Sidebar component
+import Sidebar from '../sidebar_components/sidebar'; // Import the Sidebar component
 
 const PropDashboard = () => {
   // Assuming isAuthenticated is true for demonstration purposes
@@ -20,12 +20,30 @@ const PropDashboard = () => {
 
       {/* Dashboard Content */}
       <div style={{ flex: 1, padding: '20px', fontFamily: 'Arial, sans-serif', backgroundColor: '#f5f5f5' }}>
+        
         {/* Dashboard Header */}
-        <h1>Proprietor Dashboard</h1>
+        <h1 style={{ 
+          fontSize: '2.5rem', 
+          fontWeight: 'bold', 
+          color: '#4A90E2', 
+          textAlign: 'center', 
+          marginBottom: '40px' 
+        }}>
+          Proprietor Dashboard
+        </h1>
 
         {/* Section 1: Teachers Overview */}
-        <div style={{ marginBottom: '20px' }}>
-          <h2>Teachers Overview</h2>
+        <div style={{ marginBottom: '30px' }}>
+          <h2 style={{ 
+            fontSize: '1.75rem', 
+            fontWeight: '600', 
+            color: '#333', 
+            borderBottom: '2px solid #4A90E2', 
+            paddingBottom: '10px', 
+            marginBottom: '20px' 
+          }}>
+            Teachers Overview
+          </h2>
           <ul>
             {teachers.map((teacher) => (
               <li
@@ -42,19 +60,37 @@ const PropDashboard = () => {
         </div>
 
         {/* Section 2: School Information */}
-        <div style={{ marginBottom: '20px' }}>
-          <h2>School Information</h2>
+        <div style={{ marginBottom: '30px' }}>
+          <h2 style={{ 
+            fontSize: '1.75rem', 
+            fontWeight: '600', 
+            color: '#333', 
+            borderBottom: '2px solid #4A90E2', 
+            paddingBottom: '10px', 
+            marginBottom: '20px' 
+          }}>
+            School Information
+          </h2>
           <p>Overview of the school, current status, and other key details.</p>
         </div>
 
         {/* Insert Photo */}
-        <div style={{ marginBottom: '20px' }}>
-          <h2>School Logo</h2>
+        <div>
+          <h2 style={{ 
+            fontSize: '1.75rem', 
+            fontWeight: '600', 
+            color: '#333', 
+            borderBottom: '2px solid #4A90E2', 
+            paddingBottom: '10px', 
+            marginBottom: '20px' 
+          }}>
+            School Logo
+          </h2>
           {/* Using the provided image link */}
           <img 
             src="https://opportunityintl.github.io/Brand/images/logo2_1.png"
             alt="School Logo" 
-            style={{ width: '100%', height: 'auto', maxWidth: '300px' }}
+            style={{ width: '100%', height: 'auto', maxWidth: '300px', display: 'block', margin: '0 auto' }}
           />
         </div>
       </div>
