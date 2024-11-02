@@ -23,7 +23,6 @@ const sampleTeachers = [
     { fname: 'Laura', lname: 'Jones', subjects_taught: 'Science, History, French', grades_taught: '2nd, 3rd, 4th' }
 ];
 
-<<<<<<< HEAD
 function addLessonPlan(teacherId, date, lessonPlan) {
     const teacher = list_of_teachers.find(t => t.id === parseInt(teacherId));
     if (teacher) {
@@ -67,50 +66,6 @@ http.createServer(function (req, res) {
             }
         });
     
-=======
-// Function to populate the database with sample data if it's empty
-async function initializeDatabase(collection) {
-    const count = await collection.countDocuments();
-    if (count === 0) {
-        await collection.insertMany(sampleTeachers);
-        console.log("Initialized database with sample teachers");
-    }
-}
-
-http.createServer(async function (req, res) {
-    const parsedUrl = url.parse(req.url, true);
-    const teacherId = parsedUrl.query.id;
-
-    // Connect to MongoDB collection
-    const collection = await connectToDatabase();
-
-    // Initialize the database with sample data if it's empty
-    await initializeDatabase(collection);
-
-    // Handle GET request to fetch teacher data
-    if (req.method === 'GET' && parsedUrl.pathname === '/teachers') {
-        if (teacherId) {
-            try {
-                // Fetch a teacher by their unique MongoDB ObjectId
-                const teacher = await collection.findOne({ _id: new ObjectId(teacherId) });
-                if (teacher) {
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify(teacher));
-                } else {
-                    res.writeHead(404, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'Teacher not found' }));
-                }
-            } catch (error) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Invalid teacher id format' }));
-            }
-        } else {
-            // Fetch all teachers if no specific ID is provided
-            const teachers = await collection.find().toArray();
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(teachers));
-        }
->>>>>>> 68527f34c53bd26986e44e04a3aadaed35b9329c
     } else {
         res.writeHead(404, { 'Content-Type': 'text/html' });
         res.end('<h1>404 Not Found</h1>');
