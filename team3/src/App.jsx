@@ -1,7 +1,8 @@
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import PromptPage from "./PromptPage/PromptPage";
 import SplashPage from "./SplashPage/SplashPage";
 import PropLogin from "./PropLogin/PropLogin";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Roles from "./ChooseRole/Roles";
 
 function App() {
   return (
@@ -9,7 +10,8 @@ function App() {
       <Routes>
         <Route exact path="/" element = {<SplashPage />} />
           <Route path="/PropLogin" element={<PropLogin />} />
-          {/* <Route path="/NotFound" element={<NotFound />} /> */}
+          <Route path="/PromptPage" element={<PromptPage />} />
+          <Route path="/ChooseRole" element={<Roles />} />
       </Routes>
     </Router>
   );
