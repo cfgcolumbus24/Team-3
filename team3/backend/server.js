@@ -87,13 +87,16 @@ http.createServer(function (req, res) {
         });
 
         req.on('end', () => {
-            const password = JSON.parse(body);
-    
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ message: 'Lesson plan added successfully.' }));
-        });
-        
-    
+            try {
+                const { firstName, lastName, username, password } = JSON.parse(body);
+
+                res.writeHead(201, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Account created successfully', user: { firstName, lastName, username } }));
+        } catch (error) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid JSON input.' }));
+        }
+    });
     } else {
         res.writeHead(404, { 'Content-Type': 'text/html' });
         res.end('<h1>404 Not Found</h1>');
