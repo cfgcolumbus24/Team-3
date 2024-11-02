@@ -104,58 +104,61 @@ assessments = {
     ]
 }
 
-# Function to generate a lesson plan in text format for the assistant message
+# Function to generate a lesson plan text with unique selections for each part
 def generate_lesson_plan_text(topic):
-    quick_practice = random.choice(quick_practice_examples.get(topic, ["Review basic concepts"]))
-    activity1 = random.choice(activities.get(topic, ["Activity 1"]))
-    activity2 = random.choice(activities.get(topic, ["Activity 2"]))
-    activity3 = random.choice(activities.get(topic, ["Activity 3"]))
-    essential_question1 = random.choice(essential_questions.get(topic, ["What is this concept?"]))
-    essential_question2 = random.choice(essential_questions.get(topic, ["How can we apply this concept?"]))
-    assessment1 = random.choice(assessments.get(topic, ["Quiz on topic basics"]))
-    assessment2 = random.choice(assessments.get(topic, ["Create a problem related to topic"]))
+    # Shuffle the lists to pick unique combinations each time
+    quick_practices = random.sample(quick_practice_examples.get(topic, ["Review basic concepts"]), k=1)
+    shuffled_activities = random.sample(activities.get(topic, ["Activity 1", "Activity 2", "Activity 3"]), k=3)
+    shuffled_essential_questions = random.sample(essential_questions.get(topic, ["What is this concept?", "How can we apply this concept?"]), k=2)
+    shuffled_assessments = random.sample(assessments.get(topic, ["Quiz on topic basics", "Create a problem related to topic"]), k=2)
 
     lesson_plan_text = f"""
     Quick practice (questions level below the given subject):
-    - {quick_practice}
+    - {quick_practices[0]}
 
     Daily routine:
-        Activity 1: {activity1}
-        Activity 2: {activity2}
-        Activity 3: {activity3}
+        Activity 1: {shuffled_activities[0]}
+        Activity 2: {shuffled_activities[1]}
+        Activity 3: {shuffled_activities[2]}
 
     Essential questions:
-        1. {essential_question1}
-        2. {essential_question2}
+        1. {shuffled_essential_questions[0]}
+        2. {shuffled_essential_questions[1]}
 
     Assessments:
-        1. {assessment1}
-        2. {assessment2}
+        1. {shuffled_assessments[0]}
+        2. {shuffled_assessments[1]}
     """
     return lesson_plan_text.strip()
 
-# Define topics and structure the data for JSON with messages format
+# Define topics and initialize a set to store unique generated content
 topics = ["Multi-Digit Addition and Subtraction", "Multiplication and Division Facts and Strategies", "Fractions and Decimals", "Place Value and Rounding to 10,000", "Geometry: Lines, Angles, and Shapes"]
-json_data = []
+unique_lesson_plans = set()
 
 # Set the number of variations per topic
 num_variations = 3
+json_data = []
 
 # Generate structured message data for each topic with multiple variations
 for topic in topics:
-    for _ in range(num_variations):
+    count = 0
+    while count < num_variations:
         prompt = f"Generate a lesson plan for Grade 4, Math, {topic}"
         completion_text = generate_lesson_plan_text(topic)
         
-        json_data.append({
-            "messages": [
-                {"role": "system", "content": "You are an educational assistant that creates structured lesson plans for specific topics, grade levels, and subjects."},
-                {"role": "user", "content": prompt},
-                {"role": "assistant", "content": completion_text}
-            ]
-        })
+        # Ensure uniqueness by checking if the completion_text already exists in the set
+        if completion_text not in unique_lesson_plans:
+            unique_lesson_plans.add(completion_text)
+            json_data.append({
+                "messages": [
+                    {"role": "system", "content": "You are an educational assistant that creates structured lesson plans for specific topics, grade levels, and subjects."},
+                    {"role": "user", "content": prompt},
+                    {"role": "assistant", "content": completion_text}
+                ]
+            })
+            count += 1
 
-# Append to the JSONL file without overwriting
+# Write to JSONL file
 with open("lesson_plans.jsonl", "a") as f:
     for entry in json_data:
         f.write(json.dumps(entry) + "\n")
