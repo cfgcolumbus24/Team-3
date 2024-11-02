@@ -17,9 +17,9 @@ const url = require('url');
 // }
 
 const list_of_teachers = [
-    { fname: 'Jacqueline', lname: 'Batshuayi', subjects_taught: 'Math, Science, History', grades_taught: '1st, 2nd, 3rd', calendar_info: []},
-    { fname: 'Michael', lname: 'Smith', subjects_taught: 'French, Math', grades_taught: '1st, 2nd', calendar_info:[]},
-    { fname: 'Laura', lname: 'Jones', subjects_taught: 'Science, History, French', grades_taught: '2nd, 3rd, 4th', calendar_info:[] }
+    {id: 1, fname: 'Jacqueline', lname: 'Batshuayi', subjects_taught: 'Math, Science, History', grades_taught: '1st, 2nd, 3rd', calendar_info: []},
+    {id: 2, fname: 'Michael', lname: 'Smith', subjects_taught: 'French, Math', grades_taught: '1st, 2nd', calendar_info:[]},
+    {id: 3, fname: 'Laura', lname: 'Jones', subjects_taught: 'Science, History, French', grades_taught: '2nd, 3rd, 4th', calendar_info:[] }
 ];
 
 function addLessonPlan(teacherId, dateSubmitted, lessonPlan) {
@@ -45,7 +45,7 @@ http.createServer(function (req, res) {
         res.end(JSON.stringify(list_of_teachers));
 
     // tests to see if information from post is added
-    } else if (req.method === 'GET' && parsedUrl.pathname.startsWith === '/teachers') {
+    } else if (req.method === 'GET' && parsedUrl.pathname.startsWith('/teachers')) {
         // get the teacherId from the url, i.e. /teachers/2, gets the 2
         const teacherId = parsedUrl.pathname.split('/')[2];
         const teacher = list_of_teachers.find(t => t.id === parseInt(teacherId));
@@ -68,7 +68,7 @@ http.createServer(function (req, res) {
 
         req.on('end', () => {
             const {teacherId, date, lessonPlan} = JSON.parse(body);
-            const added = addLessonPlan(teacherId, date, lessonPlan);
+            const added =  (teacherId, date, lessonPlan);
 
             if (added) {
                 res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -78,6 +78,21 @@ http.createServer(function (req, res) {
                 res.end(JSON.stringify({ error: 'Teacher not found.' }));
             }
         });
+    
+    } else if (req.method === 'POST' && parsedUrl.pathname === '/proprietor/login') {
+        let body = '';
+
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+
+        req.on('end', () => {
+            const password = JSON.parse(body);
+    
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Lesson plan added successfully.' }));
+        });
+        
     
     } else {
         res.writeHead(404, { 'Content-Type': 'text/html' });
