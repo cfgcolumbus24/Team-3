@@ -1,165 +1,284 @@
-const http = require('http');
-const url = require('url');
-const { MongoClient, ObjectId } = require('mongodb');
-const bcrypt = require('bcrypt');
-const { MongoClient, ObjectId } = require('mongodb');
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const cors = require("cors");
 
-//MongoDB connection URI and database/collection setup
-const uri = 'mongodb://localhost:27017';
-const client = new MongoClient(uri);
-const dbName = 'schoolDB';
-const teachersCollectionName = 'teachers';
-const proprietorsCollectionName = 'proprietors';
+const app = express();
+const PORT = process.env.PORT || 3001;
 
+app.use(cors());
+app.use(express.json());
 
-// Connect to MongoDB
-async function connectToDatabase() {
-    try {
-        await client.connect();
-        console.log("Connected to MongoDB");
-        const db = client.db(dbName);
-        return db.collection(collectionName);
-    } catch (error) {
-        console.error("Failed to connect to MongoDB", error);
-        throw error;
-    }
-}
+mongoose
+  .connect(process.env.MONGODB_URI || "mongodb://localhost:27017/schoolDB", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Connected to MongoDB");
+    initializeTeachers();
+  })
+  .catch((err) => console.error("Could not connect to MongoDB", err));
 
-// Initialize sample data if the collection is empty
-async function initializeDatabase(collection) {
-    const count = await collection.countDocuments();
+// User Schema and Model
+const UserSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+});
+
+const User = mongoose.model("User", UserSchema);
+
+const TeacherSchema = new mongoose.Schema({
+  _id: { type: String, required: true }, // Use custom ID
+  fname: { type: String, required: true },
+  lname: { type: String, required: true },
+  subjects_taught: { type: String, required: true },
+  grades_taught: { type: String, required: true },
+  calendar_info: [
+    {
+      date: Date,
+      lesson_plan: String,
+    },
+  ],
+});
+
+const Teacher = mongoose.model("Teacher", TeacherSchema);
+
+const ProprietorSchema = new mongoose.Schema({
+  fname: { type: String, required: true },
+  lname: { type: String, required: true },
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+});
+
+const Proprietor = mongoose.model("Proprietor", ProprietorSchema);
+
+async function initializeTeachers() {
+  try {
+    const count = await Teacher.countDocuments();
     if (count === 0) {
-        const sampleTeachers = [
-            {fname: 'Jacqueline', lname: 'Batshuayi', subjects_taught: 'Math, Science, History', grades_taught: '1st, 2nd, 3rd', calendar_info: [] },
-            {fname: 'Michael', lname: 'Smith', subjects_taught: 'French, Math', grades_taught: '1st, 2nd', calendar_info: [] },
-            {fname: 'Laura', lname: 'Jones', subjects_taught: 'Science, History, French', grades_taught: '2nd, 3rd, 4th', calendar_info: [] }
-        ];
-        await collection.insertMany(sampleTeachers);
-        console.log("Initialized database with sample teachers");
+      const sampleTeachers = [
+        {
+          _id: generateTeacherId("Jacqueline", "Batshuayi"),
+          fname: "Jacqueline",
+          lname: "Batshuayi",
+          subjects_taught: "Math, Science, History",
+          grades_taught: "1st, 2nd, 3rd",
+          calendar_info: [],
+        },
+        {
+          _id: generateTeacherId("Michael", "Smith"),
+          fname: "Michael",
+          lname: "Smith",
+          subjects_taught: "French, Math",
+          grades_taught: "1st, 2nd",
+          calendar_info: [],
+        },
+        {
+          _id: generateTeacherId("Laura", "Jones"),
+          fname: "Laura",
+          lname: "Jones",
+          subjects_taught: "Science, History, French",
+          grades_taught: "2nd, 3rd, 4th",
+          calendar_info: [],
+        },
+      ];
+      await Teacher.insertMany(sampleTeachers);
+      console.log("Initialized database with sample teachers");
     }
+  } catch (error) {
+    console.error("Failed to initialize teachers", error);
+  }
 }
 
-// Function to add a lesson plan
-async function addLessonPlan(collection, teacherId, dateSubmitted, lessonPlan) {
-    const result = await collection.updateOne(
-        { _id: new ObjectId.createFromTime(teacherId) },
-        { $push: { calendar_info: { date: dateSubmitted, lesson_plan: lessonPlan } } }
-    );
-    return result.modifiedCount > 0;
+function generateTeacherId(fname, lname) {
+  const initial = fname.charAt(0).toLowerCase();
+  const lastName = lname.toLowerCase();
+  return `${initial}_${lastName}`;
 }
 
-async function createProprietorAccount(collection, firstName, lastName, username, password) {
+const proprietorAuthMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No token provided" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.proprietorId = decoded.proprietorId;
+    req.username = decoded.username;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+app.post("/api/register", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(409).json({ message: "Username already exists" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await collection.insertOne({
-        fname: firstName,
-        lname: lastName,
-        username: username,
-        password: hashedPassword
+    const user = new User({ username, password: hashedPassword });
+    await user.save();
+    res.status(201).json({ message: "User created successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating user", error: error.message });
+  }
+});
+
+app.post("/api/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        username: user.username,
+        _id: user._id,
+      },
     });
-    return result.insertedId !== null;
-}
+  } catch (error) {
+    res.status(500).json({ message: "Error logging in", error: error.message });
+  }
+});
 
-async function authenticateProprietor(collection, username, password) {
-    const proprietor = await collection.findOne({ username: username });
-    if (proprietor && await bcrypt.compare(password, proprietor.password)) {
-        return { success: true, proprietorId: proprietor_id };
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No token provided" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.userId;
+    req.username = decoded.username;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+app.get("/api/protected", authMiddleware, (req, res) => {
+  res.json({
+    message: "This is a protected route",
+    userId: req.userId,
+    username: req.username,
+  });
+});
+
+app.get("/api/teachers", async (req, res) => {
+  try {
+    const teachers = await Teacher.find();
+    res.json(teachers);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching teachers", error: error.message });
+  }
+});
+
+app.get("/api/teachers/:id", async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.params.id);
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
     }
-    return {success: false };
-}
+    res.json(teacher);
+  } catch (error) {
+    res.status(400).json({ message: "Invalid teacher ID", error: error.message });
+  }
+});
 
-// Server
-http.createServer(async function (req, res) {
-    const parsedUrl = url.parse(req.url, true);
-    const {teachers, proprietors} = await connectToDatabase();
-
-    // Initialize the database if empty
-    await initializeDatabase(teachers);
-
-    if (req.method === 'GET' && parsedUrl.pathname === '/teachers') {
-        const teachers = await collection.find().toArray();
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(teachers));
-
-    } else if (req.method === 'GET' && parsedUrl.pathname.startsWith('/teachers/')) {
-        const teacherId = parsedUrl.pathname.split('/')[2];
-        try {
-            const teacher = await collection.findOne({ _id: new ObjectId(teacherId) });
-            if (teacher) {
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify(teacher));
-            } else {
-                res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Teacher not found.' }));
-            }
-        } catch (error) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Invalid teacher ID format.' }));
-        }
-
-    } else if (req.method === 'POST' && parsedUrl.pathname === '/teachers/calendar') {
-        let body = '';
-        req.on('data', chunk => { body += chunk.toString(); });
-        req.on('end', async () => {
-            try {
-                const { teacherId, date, lessonPlan } = JSON.parse(body);
-                const added = await addLessonPlan(teachers, teacherId, date, lessonPlan);
-
-                if (added) {
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ message: 'Lesson plan added successfully.' }));
-                } else {
-                    res.writeHead(404, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'Teacher not found.' }));
-                }
-            } catch (error) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Invalid JSON input.' }));
-            }
-        });
-    } else if (req.method === 'POST' && parsedUrl.pathname === '/proprietor/create-account') {
-        let body = '';
-        req.on('data', chunk => { body += chunk.toString(); });
-        req.on('end', async () => {
-            try {
-                const { firstName, lastName, username, password } = JSON.parse(body);
-                const registered = await createProprietorAccount(admins, firstName, lastName, username, password);
-
-                if (registered) {
-                    res.writeHead(201, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ message: 'Admin registered successfully.' }));
-                } else {
-                    res.writeHead(500, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'Admin registration failed.' }));
-                }
-            } catch (error) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Invalid JSON input.' }));
-            }
-        });
-    } else if (req.method === 'POST' && parsedUrl.pathname === 'proprietor/login') {
-        let body = '';
-        req.on('data', chunk => { body += chunk.toString(); });
-        req.on('end', async () => {
-            try {
-                const { username, password } = JSON.parse(body);
-                const { success, adminId } = await authenticateProprietor(admins, username, password);
-
-                if (success) {
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ message: 'Login successful.', adminId: adminId }));
-                } else {
-                    res.writeHead(401, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'Invalid username or password.' }));
-                }
-            } catch (error) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Invalid JSON input.' }));
-            }
-        });
-    } else {
-        res.writeHead(404, { 'Content-Type': 'text/html' });
-        res.end('<h1>404 Not Found</h1>');
+app.post("/api/teachers/calendar", proprietorAuthMiddleware, async (req, res) => {
+  try {
+    const { teacherId, date, lessonPlan } = req.body;
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
     }
-}).listen(8080);
+    teacher.calendar_info.push({ date: new Date(date), lesson_plan: lessonPlan });
+    await teacher.save();
+    res.json({ message: "Lesson plan added successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding lesson plan", error: error.message });
+  }
+});
 
-console.log('Server running at http://localhost:8080/');
+app.post("/api/proprietor/create-account", async (req, res) => {
+  try {
+    const { fname, lname, username, password } = req.body;
+    const existingProprietor = await Proprietor.findOne({ username });
+    if (existingProprietor) {
+      return res.status(409).json({ message: "Username already exists" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const proprietor = new Proprietor({
+      fname,
+      lname,
+      username,
+      password: hashedPassword,
+    });
+    await proprietor.save();
+    res.status(201).json({ message: "Proprietor account created successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating proprietor account", error: error.message });
+  }
+});
+
+app.post("/api/proprietor/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const proprietor = await Proprietor.findOne({ username });
+    if (!proprietor) {
+      return res.status(404).json({ message: "Proprietor not found" });
+    }
+    const isMatch = await bcrypt.compare(password, proprietor.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+    const token = jwt.sign(
+      { proprietorId: proprietor._id, username: proprietor.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+    res.json({
+      message: "Login successful",
+      token,
+      proprietor: {
+        fname: proprietor.fname,
+        lname: proprietor.lname,
+        username: proprietor.username,
+        _id: proprietor._id,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error logging in", error: error.message });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
